@@ -25,7 +25,7 @@ pub fn syscall(id: usize, args: [usize; 3], tf: &mut TrapFrame) -> isize {
         SYS_EXEC => sys_exec(args[0] as *const u8),
         SYS_FORK => sys_fork(tf),
         SYS_SETPRIORITY => sys_setpriority(args[0]),
-        SYS_TIMES => crate::timer::get_time() as isize,
+        SYS_TIMES => crate::timer::now() as isize,
         _ => {
             panic!("unknown syscall id {}", id);
         }
@@ -126,7 +126,7 @@ pub unsafe fn from_cstr(s: *const u8) -> &'static str {
 fn sys_exec(path: *const u8) -> isize {
     let valid = process::execute(unsafe { from_cstr(path) }, Some(process::current_tid()));
     if valid {
-        process::yield_now();
+        process::park();
     }
     return 0;
 }

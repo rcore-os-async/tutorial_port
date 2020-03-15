@@ -4,6 +4,7 @@
 #![feature(alloc_error_handler)]
 #![feature(naked_functions)]
 #![feature(const_in_array_repeat_expressions)]
+#![feature(core_intrinsics)]
 
 extern crate alloc;
 

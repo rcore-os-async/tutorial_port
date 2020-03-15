@@ -21,6 +21,6 @@ pub fn get_cycle() -> u64 {
     time::read() as u64
 }
 
-pub fn get_time() -> u64 {
+pub fn now() -> u64 {
     get_cycle() / TIMEBASE
 }

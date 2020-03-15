@@ -86,4 +86,9 @@ impl ThreadPool {
     pub fn set_priority(&mut self, id: Tid, priority: usize) {
         self.scheduler.set_priority(id, priority);
     }
+
+    pub fn set_sleep(&mut self, tid: Tid) {
+        let proc = self.threads[tid].as_mut().expect("thread not exist");
+        proc.status = Status::Sleeping;
+    }
 }
