@@ -50,6 +50,28 @@ impl MemorySet {
         memory_set.map_kernel_and_physical_memory();
         memory_set
     }
+
+    pub fn filter_clone<F: Fn(&MemoryArea) -> bool>(&mut self, filter: F) -> Self {
+        let mut pt = PageTableImpl::new_bare();
+        let mut areas = Vec::new();
+        for area in self.areas.iter() {
+            if filter(area) {
+                let cloned = area.clone();
+                cloned.copy_from(&mut pt, &mut self.page_table);
+                areas.push(cloned);
+            }
+        }
+
+        let mut vm = Self {
+            areas,
+            page_table: pt,
+        };
+
+        // Kernel areas are cloned from self, don't need to remap them
+
+        vm
+    }
+
     pub fn map_kernel_and_physical_memory(&mut self) {
         extern "C" {
             fn stext();

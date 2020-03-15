@@ -43,6 +43,10 @@ pub fn execute(path: &str, host_tid: Option<Tid>) -> bool {
     }
 }
 
+pub fn add_thread(thread: Box<Thread>) -> Tid {
+    CPU.add_thread(thread)
+}
+
 pub fn tick() {
     CPU.tick();
 }

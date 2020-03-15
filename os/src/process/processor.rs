@@ -41,8 +41,8 @@ impl Processor {
             .expect("Processor is not initialized!")
     }
 
-    pub fn add_thread(&self, thread: Box<Thread>) {
-        self.inner().pool.add(thread);
+    pub fn add_thread(&self, thread: Box<Thread>) -> Tid {
+        self.inner().pool.add(thread)
     }
 
     pub fn idle_main(&self) -> ! {

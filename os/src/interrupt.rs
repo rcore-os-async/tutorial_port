@@ -53,7 +53,7 @@ pub fn rust_trap(tf: &mut TrapFrame) {
         Trap::Exception(Exception::StorePageFault) => page_fault(tf),
         Trap::Exception(Exception::UserEnvCall) => syscall(tf),
         Trap::Interrupt(Interrupt::SupervisorExternal) => external(),
-        _ => panic!("undefined trap!"),
+        _ => panic!("undefined trap: {:?}! @ {:#x}", tf.scause.cause(), tf.sepc),
     }
 }
 

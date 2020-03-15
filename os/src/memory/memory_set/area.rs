@@ -5,10 +5,10 @@ use alloc::boxed::Box;
 
 #[derive(Debug, Clone)]
 pub struct MemoryArea {
-    start: usize,
-    end: usize,
-    handler: Box<dyn MemoryHandler>,
-    attr: MemoryAttr,
+    pub start: usize,
+    pub end: usize,
+    pub handler: Box<dyn MemoryHandler>,
+    pub attr: MemoryAttr,
 }
 
 impl MemoryArea {
@@ -20,6 +20,13 @@ impl MemoryArea {
     fn unmap(&self, pt: &mut PageTableImpl) {
         for page in PageRange::new(self.start, self.end) {
             self.handler.unmap(pt, page);
+        }
+    }
+
+    pub fn copy_from(&self, target: &mut PageTableImpl, from: &mut PageTableImpl) {
+        for page in PageRange::new(self.start, self.end) {
+            let entry = from.get_entry(page).unwrap();
+            self.attr.apply(target.map(page, entry.target()));
         }
     }
 

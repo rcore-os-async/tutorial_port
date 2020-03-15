@@ -1,7 +1,7 @@
 use super::{ExitCode, Tid};
 use crate::alloc::alloc::{alloc, dealloc, Layout};
 use crate::consts::*;
-use crate::context::Context;
+use crate::context::{Context, TrapFrame};
 use crate::memory::memory_set::{attr::MemoryAttr, handler::ByFrame, MemorySet};
 use alloc::boxed::Box;
 use core::str;
@@ -28,6 +28,7 @@ pub struct Thread {
     pub kstack: KernelStack,
     pub wait: Option<Tid>,
     pub ofile: [Option<Arc<Mutex<File>>>; NOFILE],
+    pub vm: Option<MemorySet>,
 }
 
 impl Thread {
@@ -45,6 +46,7 @@ impl Thread {
                 kstack: kstack_,
                 wait: None,
                 ofile: [None; NOFILE],
+                vm: None,
             })
         }
     }
@@ -55,6 +57,7 @@ impl Thread {
             kstack: KernelStack::new_empty(),
             wait: None,
             ofile: [None; NOFILE],
+            vm: None,
         })
     }
 
@@ -101,12 +104,47 @@ impl Thread {
             kstack: kstack,
             wait: wait_thread,
             ofile: [None; NOFILE],
+            vm: Some(vm),
         };
         for i in 0..3 {
             thread.ofile[i] = Some(Arc::new(Mutex::new(File::default())));
         }
         Box::new(thread)
-        
+    }
+
+    pub fn fork(&mut self, tf: TrapFrame) -> Box<Thread> {
+        // Fork self, allocate stack and remap stack, share rest mapping
+        // Asserts that this is an user-mode thread!
+
+        let (ustack_bottom, ustack_top) =
+            (USER_STACK_OFFSET, USER_STACK_OFFSET + USER_STACK_SIZE);
+
+        let mut vm = self.vm.as_mut().unwrap();
+        let mut cloned = vm.filter_clone(|area| area.start != ustack_bottom);
+
+        // Map new stack
+        cloned.push(
+            ustack_bottom, ustack_top,
+            MemoryAttr::new().set_user(),
+            ByFrame::new(),
+            Some((ustack_bottom, USER_STACK_SIZE)),
+        );
+
+        // println!("New stack allocated and mapped");
+
+        let kstack = KernelStack::new();
+
+        let mut thread = Thread {
+            context: unsafe { Context::fork_user_thread(kstack.top(), cloned.token(), tf) },
+            kstack: kstack,
+            wait: None,
+            ofile: self.ofile.clone(),
+            vm: Some(cloned),
+        };
+
+        println!("Thread created");
+
+        Box::new(thread)
     }
 
     // 分配文件描述符

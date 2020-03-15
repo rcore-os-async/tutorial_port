@@ -5,6 +5,7 @@ enum SyscallId {
     Write = 64,
     Exit = 93,
     Exec = 221,
+    Fork = 220,
 }
 
 #[inline(always)]
@@ -47,4 +48,8 @@ pub fn sys_read(fd: usize, base: *const u8, len: usize) -> i64 {
 
 pub fn sys_exec(path: *const u8) {
     sys_call(SyscallId::Exec, path as usize, 0, 0, 0);
+}
+
+pub fn sys_fork() -> i64 {
+    sys_call(SyscallId::Fork, 0, 0, 0, 0)
 }
