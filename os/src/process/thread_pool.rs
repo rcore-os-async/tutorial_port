@@ -82,4 +82,8 @@ impl ThreadPool {
         proc.status = Status::Ready;
         self.scheduler.push(tid);
     }
+
+    pub fn set_priority(&mut self, id: Tid, priority: usize) {
+        self.scheduler.set_priority(id, priority);
+    }
 }

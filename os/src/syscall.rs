@@ -9,6 +9,8 @@ pub const SYS_EXIT: usize = 93;
 pub const SYS_READ: usize = 63;
 pub const SYS_FORK: usize = 220;
 pub const SYS_EXEC: usize = 221;
+pub const SYS_SETPRIORITY: usize = 140;
+pub const SYS_TIMES: usize = 153;
 
 pub fn syscall(id: usize, args: [usize; 3], tf: &mut TrapFrame) -> isize {
     match id {
@@ -22,6 +24,8 @@ pub fn syscall(id: usize, args: [usize; 3], tf: &mut TrapFrame) -> isize {
         }
         SYS_EXEC => sys_exec(args[0] as *const u8),
         SYS_FORK => sys_fork(tf),
+        SYS_SETPRIORITY => sys_setpriority(args[0]),
+        SYS_TIMES => crate::timer::get_time() as isize,
         _ => {
             panic!("unknown syscall id {}", id);
         }
@@ -132,4 +136,9 @@ fn sys_fork(tf: &mut TrapFrame) -> isize {
     let tid = process::add_thread(forked);
     // println!("FORK: Return to parent at {:#x}, tid = {}", tf.sepc, tid);
     tid as isize
+}
+
+fn sys_setpriority(priority: usize) -> isize {
+    process::set_current_priority(priority);
+    0
 }

@@ -122,6 +122,8 @@ impl Thread {
         let mut vm = self.vm.as_mut().unwrap();
         let mut cloned = vm.filter_clone(|area| area.start != ustack_bottom);
 
+        println!("Copying stack");
+
         // Map new stack
         cloned.push(
             ustack_bottom, ustack_top,
@@ -142,7 +144,7 @@ impl Thread {
             vm: Some(cloned),
         };
 
-        println!("Thread created");
+        // println!("Thread created");
 
         Box::new(thread)
     }

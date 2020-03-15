@@ -6,7 +6,7 @@ pub mod thread_pool;
 use crate::fs::{INodeExt, ROOT_INODE};
 use alloc::boxed::Box;
 use processor::Processor;
-use scheduler::RRScheduler;
+use scheduler::*;
 use structs::Thread;
 use thread_pool::ThreadPool;
 
@@ -16,7 +16,7 @@ pub type ExitCode = usize;
 static CPU: Processor = Processor::new();
 
 pub fn init() {
-    let scheduler = RRScheduler::new(1);
+    let scheduler = StrideScheduler::new(1);
     let thread_pool = ThreadPool::new(100, Box::new(scheduler));
     let idle = Thread::new_kernel(Processor::idle_main as usize);
     idle.append_initial_arguments([&CPU as *const Processor as usize, 0, 0]);
@@ -72,4 +72,8 @@ pub fn current_tid() -> usize {
 
 pub fn current_thread_mut() -> &'static mut Thread {
     CPU.current_thread_mut()
+}
+
+pub fn set_current_priority(priority: usize) {
+    CPU.set_current_priority(priority);
 }

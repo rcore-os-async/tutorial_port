@@ -136,4 +136,8 @@ impl Processor {
     pub fn current_thread_mut(&self) -> &mut Thread {
         self.inner().current.as_mut().unwrap().1.as_mut()
     }
+
+    pub fn set_current_priority(&self, priority: usize) {
+        self.inner().pool.set_priority(self.current_tid(), priority);
+    }
 }
