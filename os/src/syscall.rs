@@ -1,6 +1,7 @@
 use crate::context::TrapFrame;
 use crate::process;
 use crate::fs::file::FileDescriptorType;
+use alloc::sync::Arc;
 
 pub const SYS_OPEN: usize = 56;
 pub const SYS_CLOSE: usize = 57;
@@ -11,6 +12,7 @@ pub const SYS_FORK: usize = 220;
 pub const SYS_EXEC: usize = 221;
 pub const SYS_SETPRIORITY: usize = 140;
 pub const SYS_TIMES: usize = 153;
+pub const SYS_PIPE: usize = 59;
 
 pub fn syscall(id: usize, args: [usize; 3], tf: &mut TrapFrame) -> isize {
     match id {
@@ -26,6 +28,7 @@ pub fn syscall(id: usize, args: [usize; 3], tf: &mut TrapFrame) -> isize {
         SYS_FORK => sys_fork(tf),
         SYS_SETPRIORITY => sys_setpriority(args[0]),
         SYS_TIMES => crate::timer::now() as isize,
+        SYS_PIPE => unsafe { sys_pipe(args[0] as *mut _) },
         _ => {
             panic!("unknown syscall id {}", id);
         }
@@ -41,6 +44,22 @@ fn sys_open(path: *const u8, flags: i32) -> isize {
         .lock()
         .open_file(unsafe { from_cstr(path) }, flags);
     fd
+}
+
+unsafe fn sys_pipe(pipefd: *mut [i32; 2]) -> isize {
+    let pipe = Arc::new(crate::fs::pipe::Pipe::new());
+
+    let thread = process::current_thread_mut();
+    let rfd = thread.alloc_fd() as isize;
+    let wfd = thread.alloc_fd() as isize;
+    thread.ofile[rfd as usize].as_ref().unwrap().lock().with_pipe(pipe.clone());
+    thread.ofile[wfd as usize].as_ref().unwrap().lock().with_pipe(pipe);
+
+    let pipefd = unsafe { &mut *pipefd };
+    pipefd[0] = rfd as i32;
+    pipefd[1] = wfd as i32;
+
+    0
 }
 
 fn sys_close(fd: i32) -> isize {
@@ -78,10 +97,14 @@ unsafe fn sys_read(fd: usize, base: *mut u8, len: usize) -> isize {
                 offset += s;
                 file.set_offset(offset);
                 return s as isize;
-            }
+            },
+            FileDescriptorType::FD_PIPE => {
+                let pipe = file.pipe.as_mut().unwrap();
+                return pipe.read(base, len) as isize;
+            },
             _ => {
                 panic!("fdtype not handled!");
-            }
+            },
         }
     }
 }
@@ -108,7 +131,11 @@ unsafe fn sys_write(fd: usize, base: *const u8, len: usize) -> isize {
                 offset += s;
                 file.set_offset(offset);
                 return s as isize;
-            }
+            },
+            FileDescriptorType::FD_PIPE => {
+                let pipe = file.pipe.as_mut().unwrap();
+                return pipe.write(base, len) as isize;
+            },
             _ => {
                 panic!("fdtype not handled!");
             }

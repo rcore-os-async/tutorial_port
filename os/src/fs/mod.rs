@@ -1,6 +1,7 @@
 mod device;
 pub mod stdio;
 pub mod file;
+pub mod pipe;
 
 use alloc::{sync::Arc, vec::Vec};
 use lazy_static::*;

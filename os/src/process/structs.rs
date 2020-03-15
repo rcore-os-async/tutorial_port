@@ -140,7 +140,7 @@ impl Thread {
             context: unsafe { Context::fork_user_thread(kstack.top(), cloned.token(), tf) },
             kstack: kstack,
             wait: None,
-            ofile: self.ofile.clone(),
+            ofile: self.ofile.clone(), // TODO: really?
             vm: Some(cloned),
         };
 

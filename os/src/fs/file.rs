@@ -2,12 +2,14 @@ use alloc::sync::Arc;
 use rcore_fs::vfs::INode;
 use rcore_fs_sfs::INodeImpl;
 use crate::fs::ROOT_INODE;
+use super::pipe::Pipe;
 
 #[derive(Copy,Clone,Debug)]
 pub enum FileDescriptorType {
     FD_NONE,
     FD_INODE,
     FD_DEVICE,
+    FD_PIPE,
 }
 
 #[derive(Clone)]
@@ -16,6 +18,7 @@ pub struct File {
     readable: bool,
     writable: bool,
     pub inode: Option<Arc<dyn INode>>,
+    pub pipe: Option<Arc<Pipe>>,
     offset: usize,
 }
 
@@ -26,6 +29,7 @@ impl File {
             readable: false,
             writable: false,
             inode: None,
+            pipe: None,
             offset: 0,
         }
     }
@@ -50,6 +54,14 @@ impl File {
         unsafe {
             self.inode = Some(ROOT_INODE.lookup(path).unwrap().clone());
         }
+        self.set_offset(0);
+    }
+
+    pub fn with_pipe(&mut self, pipe: Arc<Pipe>) {
+        self.set_fdtype(FileDescriptorType::FD_PIPE);
+        self.pipe = Some(pipe);
+        self.set_readable(true);
+        self.set_writable(true);
         self.set_offset(0);
     }
 }

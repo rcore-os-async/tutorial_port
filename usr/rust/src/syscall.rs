@@ -8,6 +8,7 @@ enum SyscallId {
     Fork = 220,
     SetPriority = 140,
     Times = 153,
+    Pipe = 59,
 }
 
 #[inline(always)]
@@ -62,4 +63,8 @@ pub fn set_priority(priority: usize) -> i64 {
 
 pub fn sys_gettime() -> i64 {
     sys_call(SyscallId::Times, 0, 0, 0, 0)
+}
+
+pub fn sys_pipe(pipefd: &mut[i32; 2]) -> i64 {
+    sys_call(SyscallId::Pipe, pipefd as *mut _ as _, 0, 0, 0)
 }
