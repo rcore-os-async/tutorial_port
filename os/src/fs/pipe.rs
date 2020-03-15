@@ -20,37 +20,44 @@ impl Pipe {
         let mut cnt = 0;
         let mut base = base;
 
-        let mut inner = self.inner.lock();
+        loop {
+            let mut inner = self.inner.lock();
 
-        while inner.head != inner.tail {
-            // TODO: use memcpy
-            *unsafe { &mut *base } = inner.frame[inner.head];
-            base = unsafe { base.offset(1) };
-            inner.head += 1;
-            cnt += 1;
-            if inner.head == PAGE_SIZE { inner.head = 0; }
-            if len == cnt { return cnt; }
+            while inner.head != inner.tail {
+                // TODO: use memcpy
+                *unsafe { &mut *base } = inner.frame[inner.head];
+                base = unsafe { base.offset(1) };
+                inner.head += 1;
+                cnt += 1;
+                if inner.head == PAGE_SIZE { inner.head = 0; }
+                if len == cnt { return cnt; }
+            }
+
+            drop(inner);
+            yield_now();
         }
-
-        cnt
     }
 
     pub fn write(&self, base: *const u8, len: usize) -> usize {
         let mut cnt = 0;
         let mut base = base;
 
-        let mut inner = self.inner.lock();
 
-        while (inner.tail + 1) % PAGE_SIZE != inner.head {
-            let curtail = inner.tail;
-            inner.frame[curtail] = unsafe { *base };
-            base = unsafe { base.offset(1) };
-            inner.tail = (inner.tail + 1) % PAGE_SIZE;
-            cnt += 1;
-            if len == cnt { return cnt; }
+        loop {
+            let mut inner = self.inner.lock();
+
+            while (inner.tail + 1) % PAGE_SIZE != inner.head {
+                let curtail = inner.tail;
+                inner.frame[curtail] = unsafe { *base };
+                base = unsafe { base.offset(1) };
+                inner.tail = (inner.tail + 1) % PAGE_SIZE;
+                cnt += 1;
+                if len == cnt { return cnt; }
+            }
+
+            drop(inner);
+            yield_now();
         }
-
-        cnt
     }
 
     pub fn new() -> Self {
