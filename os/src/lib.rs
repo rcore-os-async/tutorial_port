@@ -12,8 +12,8 @@ extern crate alloc;
 mod io;
 
 mod consts;
-mod context;
-mod fs;
+// mod context;
+// mod fs;
 mod init;
 mod interrupt;
 mod lang_items;
@@ -21,5 +21,5 @@ mod memory;
 mod process;
 mod sbi;
 mod sync;
-mod syscall;
-mod timer;
+// mod syscall;
+// mod timer;

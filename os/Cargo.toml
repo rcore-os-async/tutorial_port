@@ -7,15 +7,13 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-riscv = { git = "https://github.com/rcore-os/riscv", features = ["inline-asm"] }
+riscv = { features = ["inline-asm"], version = "0.5.6" }
 spin = "0.5.2"
-buddy_system_allocator = "0.3"
-xmas-elf = "0.6"
-rcore-fs = { git = "https://github.com/rcore-os/rcore-fs", rev = "d8d61190"  }
-rcore-fs-sfs = { git = "https://github.com/rcore-os/rcore-fs", rev = "d8d61190"  }
-
-[build-dependencies]
-chrono = "0.4"
+# xmas-elf = "0.6"
+# rcore-fs = { git = "https://github.com/rcore-os/rcore-fs", rev = "d8d61190"  }
+# rcore-fs-sfs = { git = "https://github.com/rcore-os/rcore-fs", rev = "d8d61190"  }
+rcore-thread = { git = "file:/root/workspace/Homework/OS/rcore-thread", rev = "d7818ad" }
+buddy_system_allocator = "0.3.9"
 
 [dependencies.lazy_static]
 version = "1.0"

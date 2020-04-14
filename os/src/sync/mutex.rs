@@ -1,5 +1,5 @@
 use crate::interrupt::{disable_and_store, restore};
-use crate::process::yield_now;
+// use crate::process::yield_now;
 use core::cell::UnsafeCell;
 use core::default::Default;
 use core::marker::Sync;
@@ -52,7 +52,7 @@ impl<T: ?Sized> Mutex<T> {
                 break;
             } else {
                 // TODO: maybe park?
-                yield_now();
+                // yield_now();
             }
         }
     }

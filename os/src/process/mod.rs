@@ -1,27 +1,56 @@
-pub mod processor;
-pub mod scheduler;
-pub mod structs;
-pub mod thread_pool;
-pub mod timer;
+// pub mod processor;
+// pub mod scheduler;
+// pub mod structs;
+// pub mod thread_pool;
+// pub mod timer;
 
-use crate::fs::{INodeExt, ROOT_INODE};
-use alloc::boxed::Box;
-use processor::Processor;
-use scheduler::*;
-use structs::Thread;
-use thread_pool::ThreadPool;
-use timer::Timer;
-use crate::timer::now;
-use lazy_static::lazy_static;
+// use crate::fs::{INodeExt, ROOT_INODE};
+// use alloc::boxed::Box;
+// use processor::Processor;
+// use scheduler::*;
+// use structs::Thread;
+// use thread_pool::ThreadPool;
+// use crate::timer::now;
+// use lazy_static::lazy_static;
 use spin::Mutex;
+use rcore_thread::asynchronous::timer::{Timer, Timeout};
+use rcore_thread::asynchronous::executor::Executor;
+use lazy_static::lazy_static;
 
 pub type Tid = usize;
 pub type ExitCode = usize;
+use alloc::boxed::Box;
 
-static CPU: Processor = Processor::new();
+// static CPU: Processor = Processor::new();
+static TIMER: Mutex<Timer> = Mutex::new(Timer::const_new());
+lazy_static! {
+    static ref EXECUTOR: Executor = Executor::new();
+}
+
+pub async fn test() {
+    loop {
+        crate::io::puts("Hello async\n");
+        let dur = core::time::Duration::from_secs(1);
+        let timeout = Timeout::from(&TIMER, dur);
+        timeout.await;
+        crate::io::puts("Goodbey async\n");
+    }
+}
 
 pub fn init() {
-    // let scheduler = StrideScheduler::new(1);
+    unsafe { riscv::register::sie::set_stimer() };
+    EXECUTOR.spawn(test());
+    EXECUTOR.run_forever();
+}
+
+pub fn tick() {
+    println!("TICK");
+    TIMER.lock().wakeup();
+}
+
+/*
+pub fn init() {
+    // let scheduler = Strideacheduler::new(1);
     let scheduler = RRScheduler::new(1);
     let thread_pool = ThreadPool::new(100, Box::new(scheduler));
     let idle = Thread::new_kernel(Processor::idle_main as usize);
@@ -32,7 +61,9 @@ pub fn init() {
 
     println!("++++ setup process!   ++++");
 }
+*/
 
+/*
 pub fn execute(path: &str, host_tid: Option<Tid>) -> bool {
     let find_result = ROOT_INODE.lookup(path);
     match find_result {
@@ -124,3 +155,5 @@ where
         unreachable!()
     }
 }
+
+*/
